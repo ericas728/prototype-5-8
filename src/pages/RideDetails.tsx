@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import Map from "@/components/Map";
+import MapboxMap from "@/components/MapboxMap";
 import Navbar from "@/components/Navbar";
 
 const RideDetails = () => {
@@ -21,7 +21,7 @@ const RideDetails = () => {
       
       {/* Map section */}
       <div className="h-64">
-        <Map className="h-full" />
+        <MapboxMap className="h-full" />
       </div>
       
       {/* Ride details */}

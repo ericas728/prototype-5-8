@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import Map from "@/components/Map";
+import MapboxMap from "@/components/MapboxMap";
 import LocationInput from "@/components/LocationInput";
 
 const Home = () => {
@@ -47,7 +47,7 @@ const Home = () => {
       
       {/* Map view */}
       <div className="flex-1 relative">
-        <Map className="h-full" />
+        <MapboxMap className="h-full" />
         
         {/* Store cards */}
         <div className="absolute bottom-20 left-0 right-0 px-5">

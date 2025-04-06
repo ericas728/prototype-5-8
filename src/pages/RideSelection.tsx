@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import Map from "@/components/Map";
+import MapboxMap from "@/components/MapboxMap";
 import RideCard from "@/components/RideCard";
 import Navbar from "@/components/Navbar";
 
@@ -37,7 +37,7 @@ const RideSelection = () => {
       
       {/* Map section */}
       <div className="h-64">
-        <Map className="h-full" />
+        <MapboxMap className="h-full" />
       </div>
       
       {/* Ride options */}
