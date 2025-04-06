@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
@@ -20,9 +19,8 @@ const SignUp = () => {
   return (
     <div className="min-h-screen bg-white p-6 flex flex-col">
       <div className="flex-1 flex flex-col">
-        <h1 className="text-2xl font-semibold mb-10 text-center">Title of App</h1>
+        <h1 className="text-2xl font-semibold mb-10 text-center">RideShare</h1>
         
-        {/* Logo placeholder */}
         <div className="w-24 h-24 bg-black rounded-lg mx-auto mb-10"></div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
