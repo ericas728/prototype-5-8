@@ -7,6 +7,7 @@ interface LocationSuggestion {
   name: string;
   address?: string;
   distance?: string;
+  coordinates?: [number, number]; // Added coordinates property
 }
 
 interface LocationInputProps {
@@ -28,19 +29,19 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Sample locations data - in a real app, this would come from an API
+  // Enhanced mock locations data with coordinates
   const mockLocations: LocationSuggestion[] = [
-    { id: '1', name: 'San Francisco', address: 'California, USA' },
-    { id: '2', name: 'Los Angeles', address: 'California, USA' },
-    { id: '3', name: 'New York', address: 'New York, USA' },
-    { id: '4', name: 'Chicago', address: 'Illinois, USA' },
-    { id: '5', name: 'Seattle', address: 'Washington, USA' },
-    { id: '6', name: 'Boston', address: 'Massachusetts, USA' },
-    { id: '7', name: 'Austin', address: 'Texas, USA' },
-    { id: '8', name: 'Miami', address: 'Florida, USA' },
-    { id: '9', name: 'Target Store', address: '789 Market St, San Francisco', distance: '0.5 miles away' },
-    { id: '10', name: 'Walmart', address: '123 Main St, San Francisco', distance: '1.2 miles away' },
-    { id: '11', name: 'Downtown Mall', address: '456 Market St, San Francisco', distance: '0.8 miles away' },
+    { id: '1', name: 'San Francisco', address: 'California, USA', coordinates: [-122.4194, 37.7749] },
+    { id: '2', name: 'Los Angeles', address: 'California, USA', coordinates: [-118.2437, 34.0522] },
+    { id: '3', name: 'New York', address: 'New York, USA', coordinates: [-73.9866, 40.7306] },
+    { id: '4', name: 'Chicago', address: 'Illinois, USA', coordinates: [-87.6298, 41.8781] },
+    { id: '5', name: 'Seattle', address: 'Washington, USA', coordinates: [-122.3321, 47.6062] },
+    { id: '6', name: 'Boston', address: 'Massachusetts, USA', coordinates: [-71.0589, 42.3601] },
+    { id: '7', name: 'Austin', address: 'Texas, USA', coordinates: [-97.7431, 30.2672] },
+    { id: '8', name: 'Miami', address: 'Florida, USA', coordinates: [-80.1918, 25.7617] },
+    { id: '9', name: 'Target Store', address: '789 Market St, San Francisco', distance: '0.5 miles away', coordinates: [-122.4124, 37.7785] },
+    { id: '10', name: 'Walmart', address: '123 Main St, San Francisco', distance: '1.2 miles away', coordinates: [-122.4284, 37.7690] },
+    { id: '11', name: 'Downtown Mall', address: '456 Market St, San Francisco', distance: '0.8 miles away', coordinates: [-122.4010, 37.7851] },
   ];
 
   useEffect(() => {

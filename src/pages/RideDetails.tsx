@@ -8,6 +8,24 @@ import Navbar from "@/components/Navbar";
 const RideDetails = () => {
   const navigate = useNavigate();
 
+  // Example destination
+  const destination = [-122.4124, 37.7785] as [number, number]; // Target location
+  
+  // Mock user location
+  const userLocation = [-122.4194, 37.7749] as [number, number]; // San Francisco
+
+  // Markers for the map
+  const markers = [
+    {
+      position: userLocation,
+      color: "#3b82f6" // Blue for user location
+    },
+    {
+      position: destination,
+      color: "#ef4444" // Red for destination
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="p-4">
@@ -21,7 +39,12 @@ const RideDetails = () => {
       
       {/* Map section */}
       <div className="h-64">
-        <MapboxMap className="h-full" />
+        <MapboxMap 
+          className="h-full" 
+          center={[(userLocation[0] + destination[0]) / 2, (userLocation[1] + destination[1]) / 2]}
+          zoom={13}
+          markers={markers}
+        />
       </div>
       
       {/* Ride details */}

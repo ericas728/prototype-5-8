@@ -10,12 +10,29 @@ interface LocationSuggestion {
   name: string;
   address?: string;
   distance?: string;
+  coordinates?: [number, number]; // Added coordinates property
 }
 
 const Home = () => {
   const [location, setLocation] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const navigate = useNavigate();
+  
+  // Example store locations with coordinates
+  const stores = [
+    { 
+      id: "target", 
+      name: "Target", 
+      distance: "0.5 miles away", 
+      coordinates: [-122.4124, 37.7785] as [number, number]
+    },
+    { 
+      id: "walmart", 
+      name: "Walmart", 
+      distance: "1.2 miles away", 
+      coordinates: [-122.4284, 37.7690] as [number, number]
+    }
+  ];
   
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocation(e.target.value);
@@ -29,6 +46,18 @@ const Home = () => {
   const handleFindRide = () => {
     navigate("/ride-selection");
   };
+
+  // Prepare markers for the map
+  const markers = [
+    // Add markers for stores
+    ...stores.map(store => ({
+      position: store.coordinates,
+      color: store.id === "target" ? "#ef4444" : "#3b82f6"
+    }))
+  ];
+
+  // If we have selected location coordinates, use them for the map center
+  const mapCenter = selectedLocation?.coordinates || [-122.4194, 37.7749];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -67,29 +96,26 @@ const Home = () => {
       
       {/* Map view */}
       <div className="flex-1 relative">
-        <MapboxMap className="h-full" />
+        <MapboxMap 
+          className="h-full" 
+          center={mapCenter}
+          zoom={14}
+          markers={markers}
+        />
         
         {/* Store cards */}
         <div className="absolute bottom-20 left-0 right-0 px-5">
-          <div className="bg-white shadow-md rounded-lg p-3 mb-3 flex items-center">
-            <div className="bg-red-500 h-10 w-10 rounded-md flex items-center justify-center mr-3">
-              <span className="text-white font-bold">T</span>
+          {stores.map(store => (
+            <div key={store.id} className="bg-white shadow-md rounded-lg p-3 mb-3 flex items-center">
+              <div className={`${store.id === 'target' ? 'bg-red-500' : 'bg-blue-500'} h-10 w-10 rounded-md flex items-center justify-center mr-3`}>
+                <span className="text-white font-bold">{store.name.charAt(0)}</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium">{store.name}</h3>
+                <p className="text-xs text-gray-500">{store.distance}</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-medium">Target</h3>
-              <p className="text-xs text-gray-500">0.5 miles away</p>
-            </div>
-          </div>
-          
-          <div className="bg-white shadow-md rounded-lg p-3 mb-3 flex items-center">
-            <div className="bg-blue-500 h-10 w-10 rounded-md flex items-center justify-center mr-3">
-              <span className="text-white font-bold">W</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium">Walmart</h3>
-              <p className="text-xs text-gray-500">1.2 miles away</p>
-            </div>
-          </div>
+          ))}
         </div>
         
         {/* Find ride button */}

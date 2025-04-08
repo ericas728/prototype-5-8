@@ -10,10 +10,28 @@ const RideSelection = () => {
   const navigate = useNavigate();
   const [selectedRideIndex, setSelectedRideIndex] = useState(0);
   
+  // Example destination
+  const destination = [-122.4124, 37.7785] as [number, number]; // Target location
+  
+  // Mock user location
+  const userLocation = [-122.4194, 37.7749] as [number, number]; // San Francisco
+  
   const rides = [
     { distance: "0.5 miles away", duration: "3-5 minutes", price: "9.50" },
     { distance: "0.7 miles away", duration: "5-7 minutes", price: "8.25" },
     { distance: "1.2 miles away", duration: "7-9 minutes", price: "10.25" }
+  ];
+
+  // Markers for the map
+  const markers = [
+    {
+      position: userLocation,
+      color: "#3b82f6" // Blue for user location
+    },
+    {
+      position: destination,
+      color: "#ef4444" // Red for destination
+    }
   ];
 
   const handleRideSelect = (index: number) => {
@@ -37,7 +55,12 @@ const RideSelection = () => {
       
       {/* Map section */}
       <div className="h-64">
-        <MapboxMap className="h-full" />
+        <MapboxMap 
+          className="h-full" 
+          center={[(userLocation[0] + destination[0]) / 2, (userLocation[1] + destination[1]) / 2]}
+          zoom={13}
+          markers={markers}
+        />
       </div>
       
       {/* Ride options */}

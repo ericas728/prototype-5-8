@@ -1,64 +1,155 @@
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface MapboxMapProps {
   className?: string;
   center?: [number, number];
   zoom?: number;
+  markers?: {
+    position: [number, number];
+    color: string;
+  }[];
 }
 
 const MapboxMap: React.FC<MapboxMapProps> = ({ 
   className = "", 
   center = [-122.4194, 37.7749], // Default to San Francisco
-  zoom = 12 
+  zoom = 12,
+  markers = []
 }) => {
-  // Calculate the appropriate map style based on the class name
-  const mapHeight = className.includes("h-64") ? "h-64" : "h-full";
-  const mapStyle = `${className} ${mapHeight} flex items-center justify-center bg-gray-100`;
-  
-  return (
-    <div className={mapStyle}>
-      <div className="relative w-full h-full overflow-hidden">
-        {/* Static map background */}
-        <div className="absolute inset-0 bg-blue-50">
-          {/* Simulated roads */}
-          <div className="absolute left-0 right-0 top-1/2 h-1 bg-gray-300"></div>
-          <div className="absolute left-0 right-0 top-1/3 h-0.5 bg-gray-300"></div>
-          <div className="absolute left-0 right-0 top-2/3 h-0.5 bg-gray-300"></div>
-          <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-gray-300"></div>
-          <div className="absolute top-0 bottom-0 left-1/3 w-0.5 bg-gray-300"></div>
-          <div className="absolute top-0 bottom-0 left-2/3 w-0.5 bg-gray-300"></div>
-          
-          {/* Simulated blocks */}
-          <div className="absolute left-[20%] top-[20%] w-[15%] h-[15%] bg-blue-100 border border-gray-300"></div>
-          <div className="absolute left-[60%] top-[30%] w-[12%] h-[10%] bg-green-100 border border-gray-300"></div>
-          <div className="absolute left-[30%] top-[60%] w-[20%] h-[15%] bg-yellow-100 border border-gray-300"></div>
-          
-          {/* Current location marker */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="w-5 h-5 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 rotate-45 w-2 h-2 bg-blue-500"></div>
-          </div>
-        </div>
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem("mapbox_token"));
+  const [showTokenInput, setShowTokenInput] = useState<boolean>(!mapboxToken);
+
+  // Handle token input
+  const handleTokenSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const input = document.getElementById("mapbox-token") as HTMLInputElement;
+    const token = input.value.trim();
+    if (token) {
+      localStorage.setItem("mapbox_token", token);
+      setMapboxToken(token);
+      setShowTokenInput(false);
+    }
+  };
+
+  useEffect(() => {
+    // If we don't have a token or container, don't initialize the map
+    if (!mapboxToken || !mapContainerRef.current) return;
+
+    try {
+      // Set the access token
+      mapboxgl.accessToken = mapboxToken;
+      
+      // Initialize the map
+      map.current = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: center,
+        zoom: zoom,
+        attributionControl: false
+      });
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), "bottom-right");
+      
+      // Add markers if provided
+      markers.forEach(marker => {
+        const el = document.createElement('div');
+        el.className = 'marker';
+        el.style.backgroundColor = marker.color;
+        el.style.width = '15px';
+        el.style.height = '15px';
+        el.style.borderRadius = '50%';
+        el.style.border = '2px solid white';
+        el.style.boxShadow = '0 0 2px rgba(0,0,0,0.3)';
         
-        {/* Destination marker */}
-        <div className="absolute left-[60%] top-[40%]">
-          <div className="w-5 h-5 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 rotate-45 w-2 h-2 bg-red-500"></div>
-        </div>
-        
-        {/* Route line */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          <path 
-            d="M 50% 50% Q 55% 45%, 60% 40%" 
-            stroke="#3b82f6" 
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray="5,5"
-            fill="none"
+        new mapboxgl.Marker(el)
+          .setLngLat(marker.position)
+          .addTo(map.current!);
+      });
+      
+      // Add user location marker
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (map.current) {
+            const userLocation: [number, number] = [position.coords.longitude, position.coords.latitude];
+            
+            const el = document.createElement('div');
+            el.className = 'user-marker';
+            el.style.backgroundColor = '#3b82f6';
+            el.style.width = '20px';
+            el.style.height = '20px';
+            el.style.borderRadius = '50%';
+            el.style.border = '3px solid white';
+            el.style.boxShadow = '0 0 3px rgba(0,0,0,0.5)';
+            
+            new mapboxgl.Marker(el)
+              .setLngLat(userLocation)
+              .addTo(map.current);
+              
+            // Center map on user location if no other center is specified
+            if (center[0] === -122.4194 && center[1] === 37.7749) {
+              map.current.flyTo({
+                center: userLocation,
+                zoom: 14,
+                essential: true
+              });
+            }
+          }
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+        }
+      );
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      // If there's an error with the token, we'll show the input again
+      setShowTokenInput(true);
+      localStorage.removeItem("mapbox_token");
+    }
+
+    // Cleanup
+    return () => {
+      if (map.current) {
+        map.current.remove();
+      }
+    };
+  }, [mapboxToken, center, zoom, markers]);
+
+  // Render token input if no token is available
+  if (showTokenInput) {
+    return (
+      <div className={`flex flex-col items-center justify-center p-4 ${className} bg-gray-100 rounded-lg`}>
+        <p className="text-sm text-gray-700 mb-3">To display the map, please enter your Mapbox token:</p>
+        <form onSubmit={handleTokenSubmit} className="w-full">
+          <input
+            id="mapbox-token"
+            type="text"
+            placeholder="Enter your Mapbox token"
+            className="w-full p-2 mb-2 border border-gray-300 rounded"
           />
-        </svg>
+          <button 
+            type="submit" 
+            className="w-full bg-black text-white p-2 rounded"
+          >
+            Submit
+          </button>
+          <p className="text-xs text-gray-500 mt-2">
+            You can get a free Mapbox token by signing up at <a href="https://www.mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500">mapbox.com</a>
+          </p>
+        </form>
       </div>
+    );
+  }
+
+  // Render the map
+  return (
+    <div className={`${className} relative`}>
+      <div ref={mapContainerRef} className="absolute inset-0" />
     </div>
   );
 };
