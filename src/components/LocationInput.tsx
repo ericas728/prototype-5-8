@@ -27,36 +27,78 @@ const LocationInput: React.FC<LocationInputProps> = ({
 }) => {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const mapboxToken = localStorage.getItem("mapbox_token");
 
-  // Enhanced mock locations data with coordinates
-  const mockLocations: LocationSuggestion[] = [
-    { id: '1', name: 'San Francisco', address: 'California, USA', coordinates: [-122.4194, 37.7749] },
-    { id: '2', name: 'Los Angeles', address: 'California, USA', coordinates: [-118.2437, 34.0522] },
-    { id: '3', name: 'New York', address: 'New York, USA', coordinates: [-73.9866, 40.7306] },
-    { id: '4', name: 'Chicago', address: 'Illinois, USA', coordinates: [-87.6298, 41.8781] },
-    { id: '5', name: 'Seattle', address: 'Washington, USA', coordinates: [-122.3321, 47.6062] },
-    { id: '6', name: 'Boston', address: 'Massachusetts, USA', coordinates: [-71.0589, 42.3601] },
-    { id: '7', name: 'Austin', address: 'Texas, USA', coordinates: [-97.7431, 30.2672] },
-    { id: '8', name: 'Miami', address: 'Florida, USA', coordinates: [-80.1918, 25.7617] },
-    { id: '9', name: 'Target Store', address: '789 Market St, San Francisco', distance: '0.5 miles away', coordinates: [-122.4124, 37.7785] },
-    { id: '10', name: 'Walmart', address: '123 Main St, San Francisco', distance: '1.2 miles away', coordinates: [-122.4284, 37.7690] },
-    { id: '11', name: 'Downtown Mall', address: '456 Market St, San Francisco', distance: '0.8 miles away', coordinates: [-122.4010, 37.7851] },
-  ];
+  // Fetch locations from Mapbox Geocoding API
+  const searchLocations = async (query: string) => {
+    if (!query || query.length < 2) return;
+    if (!mapboxToken) {
+      setError("Mapbox token not found. Please set your token in map settings.");
+      return;
+    }
 
-  useEffect(() => {
-    // Filter locations based on input value
-    if (value.length > 0) {
-      const filtered = mockLocations.filter(location => 
-        location.name.toLowerCase().includes(value.toLowerCase()) || 
-        (location.address && location.address.toLowerCase().includes(value.toLowerCase()))
-      );
-      setSuggestions(filtered);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`;
+      const params = new URLSearchParams({
+        access_token: mapboxToken,
+        autocomplete: 'true',
+        limit: '5',
+        types: 'place,address,poi'
+      });
+
+      const response = await fetch(`${endpoint}?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch locations');
+      }
+
+      const data = await response.json();
+      
+      // Transform Mapbox results to our LocationSuggestion format
+      const locations: LocationSuggestion[] = data.features.map((feature: any, index: number) => ({
+        id: feature.id || `location-${index}`,
+        name: feature.text || feature.place_name.split(',')[0],
+        address: feature.place_name,
+        coordinates: feature.center as [number, number]
+      }));
+
+      setSuggestions(locations);
       setShowSuggestions(true);
+    } catch (err) {
+      console.error('Error fetching location suggestions:', err);
+      setError('Failed to fetch locations. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle debounced search
+  useEffect(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    if (value.length > 1) {
+      debounceTimeout.current = setTimeout(() => {
+        searchLocations(value);
+      }, 300);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
     }
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
   }, [value]);
 
   // Close suggestions when clicking outside
@@ -97,12 +139,30 @@ const LocationInput: React.FC<LocationInputProps> = ({
       </div>
       
       {/* Location suggestions dropdown */}
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (
         <div 
           ref={suggestionsRef}
           className="absolute top-full left-0 right-0 mt-1 bg-white shadow-lg rounded-lg z-50 max-h-60 overflow-y-auto"
         >
-          {suggestions.map((suggestion) => (
+          {loading && (
+            <div className="p-3 text-center text-gray-500">
+              <div className="animate-pulse">Searching locations...</div>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-3 text-center text-red-500">
+              <div>{error}</div>
+            </div>
+          )}
+
+          {!loading && !error && suggestions.length === 0 && (
+            <div className="p-3 text-center text-gray-500">
+              <div>No locations found</div>
+            </div>
+          )}
+
+          {!loading && suggestions.map((suggestion) => (
             <div
               key={suggestion.id}
               className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0"

@@ -4,13 +4,14 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import MapboxMap from "@/components/MapboxMap";
 import LocationInput from "@/components/LocationInput";
+import { toast } from "@/components/ui/use-toast";
 
 interface LocationSuggestion {
   id: string;
   name: string;
   address?: string;
   distance?: string;
-  coordinates?: [number, number]; // Added coordinates property
+  coordinates?: [number, number]; 
 }
 
 const Home = () => {
@@ -36,15 +37,36 @@ const Home = () => {
   
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocation(e.target.value);
+    if (e.target.value === "") {
+      setSelectedLocation(null);
+    }
   };
   
   const handleLocationSelect = (location: LocationSuggestion) => {
     setLocation(location.name);
     setSelectedLocation(location);
+    
+    // Display toast when location is selected
+    toast({
+      title: "Location selected",
+      description: `${location.name} has been selected`,
+    });
   };
   
   const handleFindRide = () => {
-    navigate("/ride-selection");
+    if (!selectedLocation) {
+      toast({
+        title: "No location selected",
+        description: "Please search and select a location first",
+        variant: "destructive"
+      });
+      return;
+    }
+    navigate("/ride-selection", { 
+      state: { 
+        selectedLocation 
+      } 
+    });
   };
 
   // Prepare markers for the map
@@ -56,8 +78,15 @@ const Home = () => {
     }))
   ];
 
-  // If we have selected location coordinates, use them for the map center
+  // If we have selected location coordinates, add its marker and use it for map center
   const mapCenter = selectedLocation?.coordinates || [-122.4194, 37.7749];
+  
+  if (selectedLocation?.coordinates) {
+    markers.push({
+      position: selectedLocation.coordinates,
+      color: "#10b981" // green color for selected location
+    });
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -84,7 +113,7 @@ const Home = () => {
           value={location} 
           onChange={handleLocationChange}
           onLocationSelect={handleLocationSelect}
-          placeholder="Search for a location..." 
+          placeholder="Search for any location..." 
         />
         {selectedLocation && (
           <div className="mt-2 text-xs text-gray-500">
