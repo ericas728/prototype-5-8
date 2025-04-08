@@ -125,7 +125,6 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
           },
           (error) => {
             console.error("Error getting user location:", error);
-            // Don't show token input if the error is just with geolocation
           }
         );
       }

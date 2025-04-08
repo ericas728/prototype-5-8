@@ -31,11 +31,12 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const [error, setError] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const mapboxToken = localStorage.getItem("mapbox_token");
-
+  
   // Fetch locations from Mapbox Geocoding API
   const searchLocations = async (query: string) => {
     if (!query || query.length < 2) return;
+    
+    const mapboxToken = localStorage.getItem("mapbox_token");
     if (!mapboxToken) {
       setError("Mapbox token not found. Please set your token in map settings.");
       return;
@@ -53,7 +54,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
         types: 'place,address,poi'
       });
 
-      const response = await fetch(`${endpoint}?${params.toString()}`);
+      const response = await fetch(`${endpoint}?${params}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch locations');
