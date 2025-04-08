@@ -5,12 +5,25 @@ import Navbar from "@/components/Navbar";
 import MapboxMap from "@/components/MapboxMap";
 import LocationInput from "@/components/LocationInput";
 
+interface LocationSuggestion {
+  id: string;
+  name: string;
+  address?: string;
+  distance?: string;
+}
+
 const Home = () => {
   const [location, setLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const navigate = useNavigate();
   
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocation(e.target.value);
+  };
+  
+  const handleLocationSelect = (location: LocationSuggestion) => {
+    setLocation(location.name);
+    setSelectedLocation(location);
   };
   
   const handleFindRide = () => {
@@ -22,14 +35,14 @@ const Home = () => {
       {/* Welcome section */}
       <div className="p-5">
         <h1 className="text-xl font-semibold mb-2">Welcome to your home page, Lisa</h1>
-        <div className="flex space-x-3 mb-4">
-          <button className="px-3 py-1 border border-gray-300 rounded-full text-xs">
+        <div className="flex space-x-3 mb-4 overflow-x-auto">
+          <button className="px-3 py-1 border border-gray-300 rounded-full text-xs whitespace-nowrap">
             ⭐ Favorites
           </button>
-          <button className="px-3 py-1 border border-gray-300 rounded-full text-xs">
+          <button className="px-3 py-1 border border-gray-300 rounded-full text-xs whitespace-nowrap">
             🔥 Fast rides
           </button>
-          <button className="px-3 py-1 border border-gray-300 rounded-full text-xs">
+          <button className="px-3 py-1 border border-gray-300 rounded-full text-xs whitespace-nowrap">
             👨 Friends
           </button>
         </div>
@@ -40,9 +53,16 @@ const Home = () => {
         <h2 className="font-medium mb-2">Your location</h2>
         <LocationInput 
           value={location} 
-          onChange={handleLocationChange} 
-          placeholder="San Francisco" 
+          onChange={handleLocationChange}
+          onLocationSelect={handleLocationSelect}
+          placeholder="Search for a location..." 
         />
+        {selectedLocation && (
+          <div className="mt-2 text-xs text-gray-500">
+            {selectedLocation.address && <div>{selectedLocation.address}</div>}
+            {selectedLocation.distance && <div>{selectedLocation.distance}</div>}
+          </div>
+        )}
       </div>
       
       {/* Map view */}
@@ -53,7 +73,7 @@ const Home = () => {
         <div className="absolute bottom-20 left-0 right-0 px-5">
           <div className="bg-white shadow-md rounded-lg p-3 mb-3 flex items-center">
             <div className="bg-red-500 h-10 w-10 rounded-md flex items-center justify-center mr-3">
-              <span className="text-white font-bold">M</span>
+              <span className="text-white font-bold">T</span>
             </div>
             <div className="flex-1">
               <h3 className="font-medium">Target</h3>
