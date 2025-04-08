@@ -23,16 +23,37 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(localStorage.getItem("mapbox_token"));
   const [showTokenInput, setShowTokenInput] = useState<boolean>(!mapboxToken);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   // Handle token input
   const handleTokenSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const input = document.getElementById("mapbox-token") as HTMLInputElement;
     const token = input.value.trim();
-    if (token) {
-      localStorage.setItem("mapbox_token", token);
-      setMapboxToken(token);
-      setShowTokenInput(false);
+    
+    if (!token) {
+      setTokenError("Please enter a valid Mapbox token");
+      return;
+    }
+    
+    // Store the token and try to initialize the map
+    localStorage.setItem("mapbox_token", token);
+    setMapboxToken(token);
+    setShowTokenInput(false);
+    setTokenError(null);
+  };
+
+  // Clear token and show input again
+  const handleResetToken = () => {
+    localStorage.removeItem("mapbox_token");
+    setMapboxToken(null);
+    setShowTokenInput(true);
+    setTokenError(null);
+    
+    // Clean up the map if it exists
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
     }
   };
 
@@ -72,42 +93,46 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
           .addTo(map.current!);
       });
       
-      // Add user location marker
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (map.current) {
-            const userLocation: [number, number] = [position.coords.longitude, position.coords.latitude];
-            
-            const el = document.createElement('div');
-            el.className = 'user-marker';
-            el.style.backgroundColor = '#3b82f6';
-            el.style.width = '20px';
-            el.style.height = '20px';
-            el.style.borderRadius = '50%';
-            el.style.border = '3px solid white';
-            el.style.boxShadow = '0 0 3px rgba(0,0,0,0.5)';
-            
-            new mapboxgl.Marker(el)
-              .setLngLat(userLocation)
-              .addTo(map.current);
+      // Add user location marker if geolocation is available
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (map.current) {
+              const userLocation: [number, number] = [position.coords.longitude, position.coords.latitude];
               
-            // Center map on user location if no other center is specified
-            if (center[0] === -122.4194 && center[1] === 37.7749) {
-              map.current.flyTo({
-                center: userLocation,
-                zoom: 14,
-                essential: true
-              });
+              const el = document.createElement('div');
+              el.className = 'user-marker';
+              el.style.backgroundColor = '#3b82f6';
+              el.style.width = '20px';
+              el.style.height = '20px';
+              el.style.borderRadius = '50%';
+              el.style.border = '3px solid white';
+              el.style.boxShadow = '0 0 3px rgba(0,0,0,0.5)';
+              
+              new mapboxgl.Marker(el)
+                .setLngLat(userLocation)
+                .addTo(map.current);
+                
+              // Center map on user location if no other center is specified
+              if (center[0] === -122.4194 && center[1] === 37.7749) {
+                map.current.flyTo({
+                  center: userLocation,
+                  zoom: 14,
+                  essential: true
+                });
+              }
             }
+          },
+          (error) => {
+            console.error("Error getting user location:", error);
+            // Don't show token input if the error is just with geolocation
           }
-        },
-        (error) => {
-          console.error("Error getting user location:", error);
-        }
-      );
+        );
+      }
     } catch (error) {
       console.error("Error initializing map:", error);
-      // If there's an error with the token, we'll show the input again
+      // If there's an error with the token, show the input again
+      setTokenError("Invalid Mapbox token. Please try again.");
       setShowTokenInput(true);
       localStorage.removeItem("mapbox_token");
     }
@@ -132,6 +157,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
             placeholder="Enter your Mapbox token"
             className="w-full p-2 mb-2 border border-gray-300 rounded"
           />
+          {tokenError && <p className="text-xs text-red-500 mb-2">{tokenError}</p>}
           <button 
             type="submit" 
             className="w-full bg-black text-white p-2 rounded"
@@ -150,6 +176,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
   return (
     <div className={`${className} relative`}>
       <div ref={mapContainerRef} className="absolute inset-0" />
+      <button
+        onClick={handleResetToken}
+        className="absolute top-2 right-2 bg-white p-1 rounded text-xs z-10 shadow-md"
+      >
+        Change Token
+      </button>
     </div>
   );
 };

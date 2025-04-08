@@ -7,7 +7,7 @@ interface LocationSuggestion {
   name: string;
   address?: string;
   distance?: string;
-  coordinates?: [number, number]; // Added coordinates property
+  coordinates?: [number, number]; 
 }
 
 interface LocationInputProps {
